@@ -19,6 +19,14 @@ class _MyAppState extends State<MyApp> {
   StreamSubscription<NotificationButton> _buttonSubscription;
   StreamSubscription<String> _notificationSubscription;
 
+  static const AndroidNotificationChannel channel = const AndroidNotificationChannel(
+    id: 'default_notification11',
+    name: 'CustomNotificationChannel',
+    description: 'Grant this app the ability to show notifications',
+    importance: AndroidNotificationChannelImportance.HIGH,
+    vibratePattern: AndroidVibratePatterns.DEFAULT,
+  );
+
   @override
   initState() {
     super.initState();
@@ -30,6 +38,7 @@ class _MyAppState extends State<MyApp> {
         initializationSettingsAndroid, initializationSettingsIOS);
     flutterLocalNotificationsPlugin = new FlutterLocalNotificationsPlugin();
     flutterLocalNotificationsPlugin.initialize(initializationSettings);
+    flutterLocalNotificationsPlugin.createAndroidNotificationChannel(channel: channel);
     _notificationSubscription = flutterLocalNotificationsPlugin
         .onSelectNotificationStream.listen((String payload) {
       onSelectNotification(payload);
@@ -223,7 +232,10 @@ class _MyAppState extends State<MyApp> {
         'your other channel description',
         icon: 'secondary_icon',
         sound: 'slow_spring_board',
-        vibrationPattern: vibrationPattern);
+        vibrationPattern: vibrationPattern,
+        actions: [
+          new AndroidNotificationAction(text: 'FLUFF', payload: 'More fluff')
+        ]);
     var iOSPlatformChannelSpecifics =
         new NotificationDetailsIOS(sound: "slow_spring_board.aiff");
     var platformChannelSpecifics = new NotificationDetails(
@@ -392,7 +404,7 @@ class _MyAppState extends State<MyApp> {
   }
 
   Future _showDailyAtTime() async {
-    var time = new Time(10, 0, 0);
+    var time = new DateTime(2017, 12, 1, 10, 0, 0);
     var androidPlatformChannelSpecifics = new NotificationDetailsAndroid(
         'repeatDailyAtTime channel id',
         'repeatDailyAtTime channel name',
@@ -409,7 +421,7 @@ class _MyAppState extends State<MyApp> {
   }
 
   Future _showWeeklyAtDayAndTime() async {
-    var time = new Time(10, 0, 0);
+    var time = new DateTime(2017, 12, 1, 10, 0, 0);
     var androidPlatformChannelSpecifics = new NotificationDetailsAndroid(
         'show weekly channel id',
         'show weekly channel name',
@@ -421,7 +433,6 @@ class _MyAppState extends State<MyApp> {
         0,
         'show weekly title',
         'Weekly notification shown on Monday at approximately ${_toTwoDigitString(time.hour)}:${_toTwoDigitString(time.minute)}:${_toTwoDigitString(time.second)}',
-        Day.Monday,
         time,
         platformChannelSpecifics);
   }

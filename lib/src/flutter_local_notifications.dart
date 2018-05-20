@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'package:flutter/services.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/src/initialization_settings.dart';
 import 'package:flutter_local_notifications/src/notification_details.dart';
+import 'package:flutter_local_notifications/platform_specifics/android/notification_details_android.dart';
 import 'package:meta/meta.dart';
 import 'package:platform/platform.dart';
 
@@ -10,23 +12,6 @@ typedef Future<dynamic> MessageHandler(String message);
 /// The available intervals for periodically showing notifications
 enum RepeatInterval { EveryMinute, Hourly, Daily, Weekly }
 
-class Day {
-  static const Sunday = const Day(1);
-  static const Monday = const Day(2);
-  static const Tuesday = const Day(3);
-  static const Wednesday = const Day(4);
-  static const Thursday = const Day(5);
-  static const Friday = const Day(6);
-  static const Saturday = const Day(7);
-
-  static get values =>
-      [Sunday, Monday, Tuesday, Wednesday, Thursday, Friday, Saturday];
-
-  final int value;
-
-  const Day(this.value);
-}
-
 class NotificationButton {
   int notificationId;
   String payload;
@@ -34,35 +19,6 @@ class NotificationButton {
   NotificationButton({this.notificationId, this.payload});
 
   String toString() => "NotificationButton {$notificationId $payload}";
-}
-
-/// The days of the week
-//enum Day { Sunday, Monday, Tuesday, Wednesday, Thursday, Friday, Saturday }
-
-/// Used for specifying a time in 24 hour format
-class Time {
-  /// The hour component of the time. Accepted range is 0 to 23 inclusive
-  final int hour;
-
-  /// The minutes component of the time. Accepted range is 0 to 59 inclusive
-  final int minute;
-
-  /// The seconds component of the time. Accepted range is 0 to 59 inclusive
-  final int second;
-
-  Time([this.hour = 0, this.minute = 0, this.second = 0]) {
-    assert(this.hour >= 0 && this.hour < 24);
-    assert(this.minute >= 0 && this.minute < 60);
-    assert(this.second >= 0 && this.second < 60);
-  }
-
-  Map<String, int> toMap() {
-    return <String, int>{
-      'hour': hour,
-      'minute': minute,
-      'second': second,
-    };
-  }
 }
 
 class FlutterLocalNotificationsPlugin {
@@ -90,16 +46,12 @@ class FlutterLocalNotificationsPlugin {
   final StreamController<String> _notificationController =
       new StreamController<String>();
 
-  MessageHandler onSelectNotification;
-
   Stream<NotificationButton> onActionButtonPushedStream;
   Stream<String> onSelectNotificationStream;
 
   /// Initializes the plugin. Call this method on application before using the plugin further
-  Future<bool> initialize(InitializationSettings initializationSettings,
-      {MessageHandler selectNotification}) async {
+  Future<bool> initialize(InitializationSettings initializationSettings) async {
     print("${onActionButtonPushedStream} ${onSelectNotificationStream}");
-    onSelectNotification = selectNotification;
     var serializedPlatformSpecifics =
         _retrievePlatformSpecificInitializationSettings(initializationSettings);
     _channel.setMethodCallHandler(_handleMethod);
@@ -167,9 +119,18 @@ class FlutterLocalNotificationsPlugin {
     });
   }
 
-  /// Shows a notification on a daily interval at the specified time
+  Map<String, dynamic> _timeToMap(DateTime time) {
+    return {
+      'hour': time.hour,
+      'minute': time.minute,
+      'second': time.second,
+    };
+  }
+
+  /// Shows a notification on a daily interval at the specified time and
+  /// day specified in the input DateTime
   Future showDailyAtTime(int id, String title, String body,
-      Time notificationTime, NotificationDetails notificationDetails,
+      DateTime notificationTime, NotificationDetails notificationDetails,
       {String payload}) async {
     var serializedPlatformSpecifics =
         _retrievePlatformSpecificNotificationDetails(notificationDetails);
@@ -179,15 +140,15 @@ class FlutterLocalNotificationsPlugin {
       'body': body,
       'calledAt': new DateTime.now().millisecondsSinceEpoch,
       'repeatInterval': RepeatInterval.Daily.index,
-      'repeatTime': notificationTime.toMap(),
+      'repeatTime': _timeToMap(notificationTime),
       'platformSpecifics': serializedPlatformSpecifics,
       'payload': payload ?? ''
     });
   }
 
   /// Shows a notification on a daily interval at the specified time
-  Future showWeeklyAtDayAndTime(int id, String title, String body, Day day,
-      Time notificationTime, NotificationDetails notificationDetails,
+  Future showWeeklyAtDayAndTime(int id, String title, String body,
+      DateTime notificationTime, NotificationDetails notificationDetails,
       {String payload}) async {
     var serializedPlatformSpecifics =
         _retrievePlatformSpecificNotificationDetails(notificationDetails);
@@ -197,8 +158,8 @@ class FlutterLocalNotificationsPlugin {
       'body': body,
       'calledAt': new DateTime.now().millisecondsSinceEpoch,
       'repeatInterval': RepeatInterval.Weekly.index,
-      'repeatTime': notificationTime.toMap(),
-      'day': day.value,
+      'repeatTime': _timeToMap(notificationTime),
+      'day': notificationTime.weekday,
       'platformSpecifics': serializedPlatformSpecifics,
       'payload': payload ?? ''
     });
@@ -226,16 +187,39 @@ class FlutterLocalNotificationsPlugin {
     return serializedPlatformSpecifics;
   }
 
-  Future _handleMethod(MethodCall call) {
+  Future<void> _handleMethod(MethodCall call) async {
+    print("handleMethod");
+    print("${call.arguments}");
     if (call.method == "buttonPressed") {
       Map<dynamic, dynamic> args = call.arguments;
       NotificationButton buttonValue = new NotificationButton(
           notificationId: args["notification_id"], payload: args["payload"]);
       _buttonController.add(buttonValue);
-      return new Future<bool>.value(true);
+      return;
     }
     String payload = call.arguments;
     _notificationController.add(payload);
-    return onSelectNotification(payload);
+  }
+
+  /// (Android only) Creates a notification channel
+  ///
+  /// This is necessary for your app to be able to send notifications on
+  /// Android 8.0+
+  Future<Null> createAndroidNotificationChannel(
+      {@required AndroidNotificationChannel channel}) async {
+    if (_platform.isAndroid) {
+      await _channel.invokeMethod(
+          'createNotificationChannel', [channel.toMapForPlatformChannel()]);
+    }
+  }
+
+  /// (Android only) Removes a notification channel
+  ///
+  /// This only works on Android 8.0+. Otherwise it is a no-op.
+  Future<Null> removeAndroidNotificationChannel(
+      {@required AndroidNotificationChannel channel}) async {
+    if (_platform.isAndroid) {
+      await _channel.invokeMethod('remoteNotificationChannel', [channel.id]);
+    }
   }
 }

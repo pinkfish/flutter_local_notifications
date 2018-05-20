@@ -51,6 +51,7 @@ public class NotificationDetails {
     private static final String HTML_FORMAT_CONTENT = "htmlFormatContent";
     private static final String DAY = "day";
     private static final String ACTIONS = "actions";
+    private static final String LAUNCH_APPLICATION = "launchApplication";
 
     public Integer id;
     public String title;
@@ -153,6 +154,9 @@ public class NotificationDetails {
             }
             if (data.containsKey(PAYLOAD)) {
                 newButton.payload = (String) data.get(PAYLOAD);
+            }
+            if (data.containsKey(LAUNCH_APPLICATION)) {
+                newButton.launchApplication = (Boolean)data.get(LAUNCH_APPLICATION);
             }
             buttons.add(newButton);
         }

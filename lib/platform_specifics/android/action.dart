@@ -11,5 +11,13 @@ class AndroidNotificationAction {
   /// The payload to send back to the system when the button is pushed.
   String payload;
 
-  AndroidNotificationAction({this.icon, @required this.text, this.payload});
+  /// If this is an action notification and will do something exciting.
+  /// This means the payload should be a url.
+  bool launchApplication;
+
+  AndroidNotificationAction(
+      {this.icon,
+      @required this.text,
+      this.payload,
+      this.launchApplication = true});
 }

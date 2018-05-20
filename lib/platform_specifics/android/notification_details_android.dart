@@ -6,6 +6,7 @@ import 'dart:typed_data';
 import 'styles/default_style_information.dart';
 import 'styles/style_information.dart';
 import 'action.dart';
+import 'package:flutter/foundation.dart';
 
 /// The available notification styles on Android
 enum NotificationStyleAndroid { Default, BigText, Inbox }
@@ -124,7 +125,10 @@ class NotificationDetailsAndroid {
     if (actions != null) {
       for (AndroidNotificationAction button in actions) {
         buttons.add({
-          'icon': button.icon, 'title': button.text, 'payload': button.payload
+          'icon': button.icon,
+          'title': button.text,
+          'payload': button.payload,
+          'launchApplication': button.launchApplication
         });
       }
     }
@@ -150,6 +154,84 @@ class NotificationDetailsAndroid {
       'autoCancel': autoCancel,
       'ongoing': ongoing,
       'actions': buttons
+    };
+  }
+}
+
+/// Enum representing the Android IMPORTANCE enum
+///
+/// Reference:
+/// https://developer.android.com/reference/android/app/NotificationManager.html#IMPORTANCE_DEFAULT
+class AndroidNotificationChannelImportance {
+  final int val;
+  const AndroidNotificationChannelImportance._private(this.val);
+
+  static const AndroidNotificationChannelImportance MIN = const AndroidNotificationChannelImportance._private(1);
+  static const AndroidNotificationChannelImportance LOW = const AndroidNotificationChannelImportance._private(2);
+  static const AndroidNotificationChannelImportance DEFAULT = const AndroidNotificationChannelImportance._private(3);
+  static const AndroidNotificationChannelImportance HIGH = const AndroidNotificationChannelImportance._private(4);
+  static const AndroidNotificationChannelImportance MAX = const AndroidNotificationChannelImportance._private(5);
+}
+
+/// A helper class to provide values for [AndroidSettings.vibratePattern]
+///
+/// Using the value of [DEFAULT] for [AndroidSettings.vibratePattern] means
+/// that when the notification is posted, the phone will use it's default
+/// vibrate pattern.
+///
+/// Using the value of [NONE] for [AndroidSettings.vibratePattern] means that
+/// when the notification is posted, the phone will not vibrate. To be exact,
+/// the phone will wait to vibrate for 0 milliseconds and then not vibrate at all.
+/// In order for a notification to show up as a heads up notification on Android
+/// versions before 26, the notification vibrate pattern must be set, even
+/// if that pattern means that the phone doesn't actually vibrate.
+class AndroidVibratePatterns {
+  static const List<int> DEFAULT = const [];
+  static const List<int> NONE = const [0];
+  const AndroidVibratePatterns._private();
+}
+
+
+/// Class that describes an Android Notification Channel (for android 8.0+)
+///
+/// The [name] is how the user identifies your notification channels, while [id]
+/// is how your app should identify the channels and what you must use when
+/// creating notifications. [id] is also used to with
+/// [removeAndroidNotificationChannel].
+///
+/// The [description] is meant to provide a short description of this channel.
+///
+/// The value of [importance] determines the default value for the priority
+/// of notifications on this channel.
+///
+/// Android 8.0 added Notification Channels, which allow users to opt in or
+/// out of notifications more granularly than at the app level.
+/// https://developer.android.com/guide/topics/ui/notifiers/notifications.html#ManageChannels
+///
+/// For managing notification channels, reference:
+/// https://developer.android.com/training/notify-user/channels.html
+class AndroidNotificationChannel {
+  final String id;
+  final String name;
+  final String description;
+  final AndroidNotificationChannelImportance importance;
+  final List<int> vibratePattern;
+
+  const AndroidNotificationChannel({
+    @required this.id,
+    @required this.name,
+    @required this.description,
+    this.importance = AndroidNotificationChannelImportance.HIGH,
+    this.vibratePattern = AndroidVibratePatterns.DEFAULT,
+  });
+
+  Map toMapForPlatformChannel() {
+    return {
+      'id': this.id,
+      'name': this.name,
+      'description': this.description,
+      'importance': this.importance.val,
+      'vibratePattern': this.vibratePattern,
     };
   }
 }
