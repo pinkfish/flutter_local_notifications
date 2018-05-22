@@ -1,4 +1,4 @@
-import 'default_style_information.dart';
+import 'package:flutter_local_notifications/src/platform/android/styles/default_style_information.dart';
 
 class InboxStyleInformation extends DefaultStyleInformation {
   /// Overrides ContentTitle in the big form of the template.

@@ -5,5 +5,5 @@ public class ActionButton {
     public Integer iconResourceId;
     public String text;
     public String payload;
-    public Boolean launchApplication = false;
+    public IntentAction launchApplication = IntentAction.LaunchApplication;
 }

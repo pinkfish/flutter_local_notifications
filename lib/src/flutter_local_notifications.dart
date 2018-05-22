@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/src/initialization_settings.dart';
 import 'package:flutter_local_notifications/src/notification_details.dart';
-import 'package:flutter_local_notifications/platform_specifics/android/notification_details_android.dart';
 import 'package:meta/meta.dart';
 import 'package:platform/platform.dart';
 
@@ -13,12 +12,13 @@ typedef Future<dynamic> MessageHandler(String message);
 enum RepeatInterval { EveryMinute, Hourly, Daily, Weekly }
 
 class NotificationButton {
-  int notificationId;
-  String payload;
+  final int notificationId;
+  final String payload;
+  final String action;
 
-  NotificationButton({this.notificationId, this.payload});
+  NotificationButton({this.notificationId, this.payload, this.action});
 
-  String toString() => "NotificationButton {$notificationId $payload}";
+  String toString() => "NotificationButton {$notificationId $payload $action}";
 }
 
 class FlutterLocalNotificationsPlugin {
@@ -30,8 +30,6 @@ class FlutterLocalNotificationsPlugin {
       : _channel = channel,
         _platform = platform {
     onActionButtonPushedStream = _buttonController.stream.asBroadcastStream();
-    onSelectNotificationStream =
-        _notificationController.stream.asBroadcastStream();
   }
 
   static final FlutterLocalNotificationsPlugin _instance =
@@ -43,17 +41,15 @@ class FlutterLocalNotificationsPlugin {
   final Platform _platform;
   final StreamController<NotificationButton> _buttonController =
       new StreamController<NotificationButton>();
-  final StreamController<String> _notificationController =
-      new StreamController<String>();
 
   Stream<NotificationButton> onActionButtonPushedStream;
-  Stream<String> onSelectNotificationStream;
 
   /// Initializes the plugin. Call this method on application before using the plugin further
   Future<bool> initialize(InitializationSettings initializationSettings) async {
-    print("${onActionButtonPushedStream} ${onSelectNotificationStream}");
+    print("$onActionButtonPushedStream");
     var serializedPlatformSpecifics =
         _retrievePlatformSpecificInitializationSettings(initializationSettings);
+    print(serializedPlatformSpecifics);
     _channel.setMethodCallHandler(_handleMethod);
     var result =
         await _channel.invokeMethod('initialize', serializedPlatformSpecifics);
@@ -179,11 +175,13 @@ class FlutterLocalNotificationsPlugin {
   Map<String, dynamic> _retrievePlatformSpecificInitializationSettings(
       InitializationSettings initializationSettings) {
     Map<String, dynamic> serializedPlatformSpecifics;
+    print('doing this');
     if (_platform.isAndroid) {
       serializedPlatformSpecifics = initializationSettings?.android?.toMap();
     } else if (_platform.isIOS) {
       serializedPlatformSpecifics = initializationSettings?.ios?.toMap();
     }
+    print(serializedPlatformSpecifics);
     return serializedPlatformSpecifics;
   }
 
@@ -193,33 +191,20 @@ class FlutterLocalNotificationsPlugin {
     if (call.method == "buttonPressed") {
       Map<dynamic, dynamic> args = call.arguments;
       NotificationButton buttonValue = new NotificationButton(
-          notificationId: args["notification_id"], payload: args["payload"]);
+          notificationId: args["notification_id"],
+          payload: args["payload"],
+          action: args["action"]);
       _buttonController.add(buttonValue);
       return;
     }
-    String payload = call.arguments;
-    _notificationController.add(payload);
-  }
-
-  /// (Android only) Creates a notification channel
-  ///
-  /// This is necessary for your app to be able to send notifications on
-  /// Android 8.0+
-  Future<Null> createAndroidNotificationChannel(
-      {@required AndroidNotificationChannel channel}) async {
-    if (_platform.isAndroid) {
-      await _channel.invokeMethod(
-          'createNotificationChannel', [channel.toMapForPlatformChannel()]);
+    String payload = call.arguments[0];
+    int id = call.arguments[1];
+    String action = call.arguments[2];
+    if (action == 'com.apple.UNNotificationDefaultActionIdentifier') {
+      action = '';
     }
-  }
-
-  /// (Android only) Removes a notification channel
-  ///
-  /// This only works on Android 8.0+. Otherwise it is a no-op.
-  Future<Null> removeAndroidNotificationChannel(
-      {@required AndroidNotificationChannel channel}) async {
-    if (_platform.isAndroid) {
-      await _channel.invokeMethod('remoteNotificationChannel', [channel.id]);
-    }
+    NotificationButton buttonValue = new NotificationButton(
+        notificationId: id, payload: payload, action: action);
+    _buttonController.add(buttonValue);
   }
 }

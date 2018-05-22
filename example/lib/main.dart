@@ -17,15 +17,8 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin;
   StreamSubscription<NotificationButton> _buttonSubscription;
-  StreamSubscription<String> _notificationSubscription;
 
-  static const AndroidNotificationChannel channel = const AndroidNotificationChannel(
-    id: 'default_notification11',
-    name: 'CustomNotificationChannel',
-    description: 'Grant this app the ability to show notifications',
-    importance: AndroidNotificationChannelImportance.HIGH,
-    vibratePattern: AndroidVibratePatterns.DEFAULT,
-  );
+  static const String _category = 'fluff';
 
   @override
   initState() {
@@ -33,16 +26,23 @@ class _MyAppState extends State<MyApp> {
     // initialise the plugin
     var initializationSettingsAndroid =
         new InitializationSettingsAndroid('app_icon');
-    var initializationSettingsIOS = new InitializationSettingsIOS();
+    var initializationSettingsIOS =
+        new InitializationSettingsIOS(categorySetup: [
+      new IOSCategoryDetails(id: _category, actions: [
+        new IOSActionDetails(
+          id: 'directions',
+          title: 'DIRECTIONS',
+        ),
+        new IOSActionDetails(
+          id: 'details',
+          title: 'DETAILS',
+        )
+      ])
+    ]);
     var initializationSettings = new InitializationSettings(
         initializationSettingsAndroid, initializationSettingsIOS);
     flutterLocalNotificationsPlugin = new FlutterLocalNotificationsPlugin();
     flutterLocalNotificationsPlugin.initialize(initializationSettings);
-    flutterLocalNotificationsPlugin.createAndroidNotificationChannel(channel: channel);
-    _notificationSubscription = flutterLocalNotificationsPlugin
-        .onSelectNotificationStream.listen((String payload) {
-      onSelectNotification(payload);
-    });
     _buttonSubscription = flutterLocalNotificationsPlugin
         .onActionButtonPushedStream.listen((NotificationButton button) {
       onButtonPressed(button);
@@ -51,8 +51,6 @@ class _MyAppState extends State<MyApp> {
 
   @override
   void dispose() {
-    _notificationSubscription?.cancel();
-    _notificationSubscription = null;
     _buttonSubscription?.cancel();
     _buttonSubscription = null;
     super.dispose();
@@ -202,10 +200,15 @@ class _MyAppState extends State<MyApp> {
         importance: Importance.Max,
         priority: Priority.High,
         actions: [
-          new AndroidNotificationAction(text: 'FLUFF', payload: 'More fluff')
+          new AndroidNotificationAction(text: 'FLUFF', payload: 'More fluff'),
+          new AndroidNotificationAction(
+              text: 'FROG',
+              payload: 'http://www.frog.com',
+              actionOnClick: ActionOnClick.OpenURL)
         ]);
 
-    var iOSPlatformChannelSpecifics = new NotificationDetailsIOS();
+    var iOSPlatformChannelSpecifics =
+        new NotificationDetailsIOS(categoryId: _category);
     var platformChannelSpecifics = new NotificationDetails(
         androidPlatformChannelSpecifics, iOSPlatformChannelSpecifics);
     await flutterLocalNotificationsPlugin.show(
@@ -234,10 +237,14 @@ class _MyAppState extends State<MyApp> {
         sound: 'slow_spring_board',
         vibrationPattern: vibrationPattern,
         actions: [
-          new AndroidNotificationAction(text: 'FLUFF', payload: 'More fluff')
+          new AndroidNotificationAction(text: 'FLUFF', payload: 'More fluff'),
+          new AndroidNotificationAction(
+              text: 'FROG',
+              payload: 'http://www.frog.com',
+              actionOnClick: ActionOnClick.OpenURL)
         ]);
-    var iOSPlatformChannelSpecifics =
-        new NotificationDetailsIOS(sound: "slow_spring_board.aiff");
+    var iOSPlatformChannelSpecifics = new NotificationDetailsIOS(
+        sound: "slow_spring_board.aiff", categoryId: _category);
     var platformChannelSpecifics = new NotificationDetails(
         androidPlatformChannelSpecifics, iOSPlatformChannelSpecifics);
     await flutterLocalNotificationsPlugin.schedule(

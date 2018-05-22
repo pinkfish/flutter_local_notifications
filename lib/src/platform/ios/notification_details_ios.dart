@@ -13,15 +13,19 @@ class NotificationDetailsIOS {
   /// Specifies the name of the file to play for the notification. Requires setting [presentSound] to true. If [presentSound] is set to true but [sound] isn't specified then it will use the default notification sound.
   final String sound;
 
+  /// The category to use to display the notification
+  final String categoryId;
+
   NotificationDetailsIOS(
-      {this.presentAlert, this.presentBadge, this.presentSound, this.sound});
+      {this.presentAlert, this.presentBadge, this.presentSound, this.sound, this.categoryId});
 
   Map<String, dynamic> toMap() {
     return <String, dynamic>{
       'presentAlert': presentAlert,
       'presentSound': presentSound,
       'presentBadge': presentBadge,
-      'sound': sound
+      'sound': sound,
+      'categoryId': categoryId
     };
   }
 }

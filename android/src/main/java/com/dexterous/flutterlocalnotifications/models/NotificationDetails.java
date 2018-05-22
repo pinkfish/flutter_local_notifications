@@ -51,7 +51,7 @@ public class NotificationDetails {
     private static final String HTML_FORMAT_CONTENT = "htmlFormatContent";
     private static final String DAY = "day";
     private static final String ACTIONS = "actions";
-    private static final String LAUNCH_APPLICATION = "launchApplication";
+    private static final String ACTION_ON_CLICK = "actionOnClick";
 
     public Integer id;
     public String title;
@@ -155,8 +155,16 @@ public class NotificationDetails {
             if (data.containsKey(PAYLOAD)) {
                 newButton.payload = (String) data.get(PAYLOAD);
             }
-            if (data.containsKey(LAUNCH_APPLICATION)) {
-                newButton.launchApplication = (Boolean)data.get(LAUNCH_APPLICATION);
+            if (data.containsKey(ACTION_ON_CLICK)) {
+                String enumType = (String)data.get(ACTION_ON_CLICK);
+                System.out.println(enumType);
+                if (enumType.compareTo("LaunchApplication") == 0) {
+                    newButton.launchApplication = IntentAction.LaunchApplication;
+                } else if (enumType.compareTo("BackgroundService") == 0) {
+                    newButton.launchApplication = IntentAction.BackgroundService;
+                } else {
+                    newButton.launchApplication = IntentAction.OpenURL;
+                }
             }
             buttons.add(newButton);
         }

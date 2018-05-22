@@ -3,5 +3,5 @@
 
 @interface FlutterLocalNotificationsPlugin : NSObject <FlutterPlugin, UNUserNotificationCenterDelegate>
 + (bool) resumingFromBackground;
-+ (void)handleSelectNotification:(NSString *)payload;
++ (void)handleSelectNotification:(NSArray *)payload;
 @end

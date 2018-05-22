@@ -5,10 +5,10 @@ import 'package:test/test.dart';
 import 'package:flutter_local_notifications/src/flutter_local_notifications.dart';
 import 'package:flutter_local_notifications/src/initialization_settings.dart';
 import 'package:flutter_local_notifications/src/notification_details.dart';
-import 'package:flutter_local_notifications/platform_specifics/android/initialization_settings_android.dart';
-import 'package:flutter_local_notifications/platform_specifics/android/notification_details_android.dart';
-import 'package:flutter_local_notifications/platform_specifics/ios/initialization_settings_ios.dart';
-import 'package:flutter_local_notifications/platform_specifics/ios/notification_details_ios.dart';
+import 'package:flutter_local_notifications/src/platform/android/initialization_settings_android.dart';
+import 'package:flutter_local_notifications/src/platform/android/notification_details_android.dart';
+import 'package:flutter_local_notifications/src/platform/ios/initialization_settings_ios.dart';
+import 'package:flutter_local_notifications/src/platform/ios/notification_details_ios.dart';
 
 void main() {
   MockMethodChannel mockChannel;

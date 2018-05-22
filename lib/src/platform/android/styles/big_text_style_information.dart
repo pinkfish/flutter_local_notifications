@@ -1,4 +1,4 @@
-import 'default_style_information.dart';
+import 'package:flutter_local_notifications/src/platform/android/styles/default_style_information.dart';
 
 class BigTextStyleInformation extends DefaultStyleInformation {
   /// Provide the longer text to be displayed in the big form of the template in place of the content text.

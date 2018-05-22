@@ -1,3 +1,5 @@
+import 'category.dart';
+
 /// Plugin initialization settings for iOS
 class InitializationSettingsIOS {
   /// Request permission to display an alert
@@ -18,13 +20,17 @@ class InitializationSettingsIOS {
   /// Default setting that indiciates if a badge value should be applied when a notification is triggered while app is in the foreground. iOS 10+ only
   final bool defaultPresentBadge;
 
+  /// Details to setup the buttons for specific categories for iOS.
+  final List<IOSCategoryDetails> categorySetup;
+
   const InitializationSettingsIOS(
       {this.requestAlertPermission = true,
       this.requestSoundPermission = true,
       this.requestBadgePermission = true,
       this.defaultPresentAlert = true,
       this.defaultPresentSound = true,
-      this.defaultPresentBadge = true});
+      this.defaultPresentBadge = true,
+      this.categorySetup = const []});
 
   Map<String, dynamic> toMap() {
     return <String, dynamic>{
@@ -33,7 +39,8 @@ class InitializationSettingsIOS {
       'requestBadgePermission': requestBadgePermission,
       'defaultPresentAlert': defaultPresentAlert,
       'defaultPresentSound': defaultPresentSound,
-      'defaultPresentBadge': defaultPresentBadge
+      'defaultPresentBadge': defaultPresentBadge,
+      'categories': categorySetup.map((IOSCategoryDetails detail) => detail.toMap()).toList()
     };
   }
 }

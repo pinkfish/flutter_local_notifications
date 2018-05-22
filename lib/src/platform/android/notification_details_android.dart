@@ -5,7 +5,7 @@ import 'dart:typed_data';
 
 import 'styles/default_style_information.dart';
 import 'styles/style_information.dart';
-import 'action.dart';
+import 'package:flutter_local_notifications/src/platform/android/action.dart';
 import 'package:flutter/foundation.dart';
 
 /// The available notification styles on Android
@@ -128,7 +128,7 @@ class NotificationDetailsAndroid {
           'icon': button.icon,
           'title': button.text,
           'payload': button.payload,
-          'launchApplication': button.launchApplication
+          'actionOnClick': button.actionOnClick.toString().replaceAll("ActionOnClick.", "")
         });
       }
     }

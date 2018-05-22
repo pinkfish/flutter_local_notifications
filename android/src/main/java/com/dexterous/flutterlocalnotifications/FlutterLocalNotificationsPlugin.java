@@ -74,6 +74,7 @@ public class FlutterLocalNotificationsPlugin implements MethodCallHandler, Plugi
     public static final String NOTIFICATION_ID = "notification_id";
     public static final String NOTIFICATION = "notification";
     public static final String REPEAT = "repeat";
+    public static final String ACTION = "action";
     private static MethodChannel channel;
     private static int defaultIconResourceId;
     private final Registrar registrar;
@@ -318,23 +319,46 @@ public class FlutterLocalNotificationsPlugin implements MethodCallHandler, Plugi
             System.out.println(button.text);
             PendingIntent pendingButtonIntent;
             Intent buttonIntent;
-            if (button.launchApplication) {
-                System.out.println(context.getPackageName());
-                buttonIntent = context.getPackageManager()
-                        .getLaunchIntentForPackage(context.getPackageName());
-                buttonIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-             } else {
-                buttonIntent = new Intent(context, FlutterActionService.class);
+            switch (button.launchApplication) {
+                case OpenURL:
+                    System.out.println("OpenURL");
+                    buttonIntent = new Intent(Intent.ACTION_VIEW);
+                    buttonIntent.setData(Uri.parse(button.payload));
+                    break;
+                case BackgroundService:
+                    System.out.println("BackgroundService");
+                    buttonIntent = new Intent(context, FlutterActionService.class);
+                    buttonIntent.setAction(ACTION_FLUTTER_BUTTON);
+                    break;
+                case LaunchApplication:
+                default:
+                    System.out.println(context.getPackageName());
+                    buttonIntent = context.getPackageManager()
+                            .getLaunchIntentForPackage(context.getPackageName());
+                    buttonIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    buttonIntent.setAction(ACTION_FLUTTER_BUTTON);
+                    break;
             }
-            buttonIntent.setAction(ACTION_FLUTTER_BUTTON);
             buttonIntent.putExtra(NOTIFICATION_ID, notificationDetails.id);
             buttonIntent.putExtra(PAYLOAD, button.payload);
-            pendingButtonIntent = PendingIntent.getService(
-                    context,
-                    currentId++,
-                    buttonIntent,
-                    PendingIntent.FLAG_UPDATE_CURRENT);
-
+            switch (button.launchApplication) {
+                case BackgroundService:
+                    pendingButtonIntent = PendingIntent.getService(
+                            context,
+                            currentId++,
+                            buttonIntent,
+                            PendingIntent.FLAG_UPDATE_CURRENT);
+                    break;
+                case OpenURL:
+                case LaunchApplication:
+                default:
+                    pendingButtonIntent = PendingIntent.getActivity(
+                            context,
+                            currentId++,
+                            buttonIntent,
+                            PendingIntent.FLAG_UPDATE_CURRENT);
+                    break;
+            }
             if (button.iconResourceId == null) {
                 if (button.icon != null) {
                     button.iconResourceId = context.getResources().getIdentifier(notificationDetails.icon, "drawable", context.getPackageName());
@@ -586,14 +610,18 @@ public class FlutterLocalNotificationsPlugin implements MethodCallHandler, Plugi
 
     private static Boolean sendNotificationPayloadMessage(Intent intent) {
         if (ACTION_SELECT_NOTIFICATION.equals(intent.getAction())) {
-            String payload = intent.getStringExtra(PAYLOAD);
-            channel.invokeMethod("selectNotification", payload);
+            Map<String, Object> data = new HashMap<String, Object>();
+            data.put(PAYLOAD, intent.getStringExtra(PAYLOAD));
+            data.put(NOTIFICATION_ID, intent.getIntExtra(NOTIFICATION_ID, 0));
+            data.put(ACTION, "default");
+            channel.invokeMethod("buttonPressed", data);
             return true;
         }
         if (ACTION_FLUTTER_BUTTON.equals(intent.getAction())) {
             Map<String, Object> data = new HashMap<String, Object>();
             data.put(PAYLOAD, intent.getStringExtra(PAYLOAD));
             data.put(NOTIFICATION_ID, intent.getIntExtra(NOTIFICATION_ID, 0));
+            data.put(ACTION, "button");
             //String payload = intent.getStringExtra(PAYLOAD);
             //Integer notificationId = intent.getIntExtra(NOTIFICATION_ID);
             channel.invokeMethod("buttonPressed", data);
