@@ -544,8 +544,13 @@ public class FlutterLocalNotificationsPlugin implements MethodCallHandler, Plugi
                 break;
             }
             case CANCEL_METHOD:
-                Integer id = call.arguments();
-                cancelNotification(id);
+                if (call.arguments() instanceof Long) {
+                    Long id = call.arguments();
+                    cancelNotification(id.intValue());
+                } else {
+                    Integer id = call.arguments();
+                    cancelNotification(id);
+                }
                 result.success(null);
                 break;
             case CANCEL_ALL_METHOD:

@@ -185,12 +185,13 @@ class _MyAppState extends State<MyApp> {
   Future _showNotification() async {
     var androidPlatformChannelSpecifics = new NotificationDetailsAndroid(
         'your channel id', 'your channel name', 'your channel description',
-        importance: Importance.Max, priority: Priority.High);
+        importance: Importance.Max, priority: Priority.High,
+        styleInformation: new DefaultStyleInformation(true, true));
     var iOSPlatformChannelSpecifics = new NotificationDetailsIOS();
     var platformChannelSpecifics = new NotificationDetails(
         androidPlatformChannelSpecifics, iOSPlatformChannelSpecifics);
     await flutterLocalNotificationsPlugin.show(
-        0, 'plain title', 'plain body', platformChannelSpecifics,
+        0, 'plain <b>title</b>', '<i>here</i><p>More stuff', platformChannelSpecifics,
         payload: 'item x');
   }
 
