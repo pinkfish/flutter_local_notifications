@@ -11,8 +11,8 @@ dependencies:
   platform: ^2.0.0
 
 dev_dependencies:
-  mockito: ^2.0.2
-  test: ^0.12.35
+  mockito: any
+  test: any
 
 # The following section is specific to Flutter.
 flutter:
@@ -22,5 +22,5 @@ flutter:
 
 
 environment:
-  sdk: ">=2.0.0-dev.28.0 <3.0.0"
+  sdk: ">=1.19.0 <3.0.0"
   flutter: ">=0.1.4 <2.0.0"
