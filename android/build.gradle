@@ -22,10 +22,11 @@ rootProject.allprojects {
 apply plugin: 'com.android.library'
 
 android {
-    compileSdkVersion 27
+    compileSdkVersion 28
 
     defaultConfig {
-        minSdkVersion 16
+        targetSdkVersion 28
+        minSdkVersion 21
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
     lintOptions {
@@ -34,6 +35,6 @@ android {
 }
 
 dependencies {
-    implementation "com.android.support:support-compat:27.1.0"
+    implementation 'androidx.legacy:legacy-support-v4:1.0.0'
     implementation "com.google.code.gson:gson:2.8.2"
 }
